@@ -62,11 +62,10 @@ unless they have been made discoverable through being logged.
 > [F-Secure USB Armory Mk II](https://inversepath.com/usbarmory.html) in mind.
 > Would be nice if we can make this work with QEmu too.
 
-Rough plan for an example:
  - [ ] Define a [claimant model](https://github.com/google/trillian/tree/master/docs/claimantmodel)
        description.
  - [ ] Specify/document a system architecture for that model.
- - [ ] Come up with a metadata format.
+ - [X] Come up with some metadata format.
  - [ ] Build a simple personality around that format.
  - [ ] Build a simple tool to create metadata given a "boot" image (e.g. Linux
      Kernel, Tamago unikernel, etc.), and log it via the personality.
