@@ -10,6 +10,8 @@ This directory will contain some examples of how to apply binary transparency to
 Index
 -----
 
+ * [Firmware](firmware) Transparency
+   This is an example of applying transparency to firmware for a small compute platform.
 
 
 
