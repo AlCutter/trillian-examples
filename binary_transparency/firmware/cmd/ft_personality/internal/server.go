@@ -91,7 +91,25 @@ func (s *Server) addFirmware(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// getConsitency returns consistency proofs between publised tree sizes.
+func (s *Server) getConsistency(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+// getFirmwareEntries returns the leaves in the tree.
+func (s *Server) getFirmwareEntries(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
+// getRoot returns a recent tree root.
+func (s *Server) getRoot(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
+}
+
 // RegisterHandlers registers HTTP handlers for firmware transparency endpoints.
 func (s *Server) RegisterHandlers() {
-	http.HandleFunc("/ft/v0/add_firmware", s.addFirmware)
+	http.HandleFunc("/ft/v0/add-firmware", s.addFirmware)
+	http.HandleFunc("/ft/v0/get-consistency", s.getConsistency)
+	http.HandleFunc("/ft/v0/get-firmware-entries", s.getFirmwareEntries)
+	http.HandleFunc("/ft/v0/get-root", s.getRoot)
 }
