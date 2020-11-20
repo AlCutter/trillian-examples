@@ -89,8 +89,8 @@ Number  Start     End        Size       Type     File system  Flags
 
 Finally, create filesystems on the 2nd and 3rd partitions of our SDCard:
 ```bash
-$ sudo mkfs.ext4 /dev/my_sdcard2
-$ sudo mkfs.ext4 /dev/my_sdcard3
+$ sudo mkfs.ext4 /dev/my_sdcard2 -L proof
+$ sudo mkfs.ext4 /dev/my_sdcard3 -L unikernel
 ```
 
 Next you'll build and install the bootloader on the card.
@@ -106,7 +106,7 @@ To compile the bootloader itself, run the following command in the `bootloader`
 directory:
 
 ```bash
-# Note that START corresponds to the offset of the unikernel partition:
+# Note that START corresponds to the offset of the unikernel partition;
 make CROSS_COMPILE=arm-none-eabi- TARGET=usbarmory imx BOOT=uSD START=1024512
 ```
 
