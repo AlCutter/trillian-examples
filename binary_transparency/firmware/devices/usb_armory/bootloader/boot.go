@@ -11,6 +11,8 @@
 package main
 
 import (
+	"bytes"
+	"debug/elf"
 	"fmt"
 
 	"github.com/f-secure-foundry/tamago/arm"
@@ -22,7 +24,49 @@ import (
 
 // defined in boot.s
 func exec(kernel uint32, params uint32)
+func execElf(elf uint32)
 func svc()
+
+func bootElf(img []byte) {
+	dma.Init(dmaStart, dmaSize)
+	mem, _ := dma.Reserve(dmaSize, 0)
+
+	f, err := elf.NewFile(bytes.NewReader(img))
+	if err != nil {
+		panic(err.Error)
+	}
+
+	for idx, prg := range f.Progs {
+		if prg.Type == elf.PT_LOAD {
+			fmt.Printf("Loading %+v\n", *prg)
+			b := make([]byte, prg.Memsz)
+			n, err := prg.ReadAt(b[0:prg.Filesz], 0)
+			if err != nil {
+				panic(fmt.Sprintf("Failed to read LOAD section at idx %d: %q", idx, err))
+			}
+			dma.Write(mem, b, int(prg.Paddr))
+			fmt.Printf("Loaded %d bytes at 0x%x\n", n, prg.Paddr)
+		} else {
+			fmt.Printf("ignoring %+v\n", *prg)
+		}
+	}
+
+	entry := f.Entry
+
+	arm.ExceptionHandler(func(n int) {
+		if n != arm.SUPERVISOR {
+			panic("unhandled exception")
+		}
+
+		fmt.Printf("armory-boot: starting elf image@%x\n", entry)
+
+		usbarmory.LED("blue", false)
+		usbarmory.LED("white", false)
+		execElf(uint32(entry))
+	})
+
+	svc()
+}
 
 func boot(kernel []byte, dtb []byte, cmdline string) {
 	dma.Init(dmaStart, dmaSize)

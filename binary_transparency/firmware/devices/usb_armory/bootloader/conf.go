@@ -22,6 +22,7 @@ const defaultConfigPath = "/boot/armory-boot.conf"
 var conf Config
 
 type Config struct {
+	Elf	       []string `json:"elf"`
 	Kernel         []string `json:"kernel"`
 	DeviceTreeBlob []string `json:"dtb"`
 	CmdLine        string   `json:"cmdline"`
@@ -33,23 +34,32 @@ func (c *Config) Read(partition *Partition, configPath string) (err error) {
 	log.Printf("armory-boot: reading configuration at %s\n", configPath)
 
 	c.conf, err = partition.ReadAll(configPath)
-
 	if err != nil {
 		return
 	}
 
-	err = json.Unmarshal(c.conf, &c)
-
-	if err != nil {
+	if err = json.Unmarshal(c.conf, &c); err != nil {
 		return
 	}
 
-	if len(conf.Kernel) != 2 {
-		return errors.New("invalid kernel parameter size")
+	el, kl := len(conf.Elf), len(conf.Kernel)
+	if (el>0) == (kl>0) {
+		return errors.New("must specify either elf or kernel")
 	}
 
-	if len(conf.DeviceTreeBlob) != 2 {
-		return errors.New("invalid kernel parameter size")
+	switch {
+	case kl > 0:
+		if kl != 2 {
+			return errors.New("invalid kernel parameter size")
+		}
+
+		if len(conf.DeviceTreeBlob) != 2 {
+			return errors.New("invalid kernel parameter size")
+		}
+	case el > 0:
+		if el != 2 {
+			return errors.New("invalid elf parameter size")
+		}
 	}
 
 	c.Print()
