@@ -32,8 +32,3 @@ TEXT ·exec(SB),$0-8
 	// Jump to kernel image
 	B	(R3)
 
-// func execElf(elf uint32)
-TEXT ·execElf(SB),$0-4
-	MOVW	elf+0(FP), R3
-	// Jump to kernel image
-	B	(R3)
