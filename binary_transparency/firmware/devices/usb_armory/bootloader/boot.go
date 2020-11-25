@@ -35,6 +35,9 @@ func bootElf(img []byte) {
 	if err != nil {
 		panic(err.Error)
 	}
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
 
 	for idx, prg := range f.Progs {
 		if prg.Type == elf.PT_LOAD {
@@ -44,8 +47,9 @@ func bootElf(img []byte) {
 			if err != nil {
 				panic(fmt.Sprintf("Failed to read LOAD section at idx %d: %q", idx, err))
 			}
-			dma.Write(mem, b, int(prg.Paddr))
-			fmt.Printf("Loaded %d bytes at 0x%x\n", n, prg.Paddr)
+			offset := uint32(prg.Paddr)-mem
+			dma.Write(mem, b, int(offset))
+			fmt.Printf("Loaded %d bytes at 0x%x+0x%x\n", n, mem, offset)
 		} else {
 			fmt.Printf("ignoring %+v\n", *prg)
 		}
@@ -62,6 +66,14 @@ func bootElf(img []byte) {
 
 		usbarmory.LED("blue", false)
 		usbarmory.LED("white", false)
+
+		// Linux RNGB driver doesn't play well with a previously
+		// initialized RNGB, therefore reset it.
+		imx6.RNGB.Reset()
+
+		imx6.ARM.InterruptsDisable()
+		imx6.ARM.CacheFlushData()
+		imx6.ARM.CacheDisable()
 		execElf(uint32(entry))
 	})
 
