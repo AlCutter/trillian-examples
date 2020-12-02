@@ -1,0 +1,38 @@
+sequenceDiagram
+    participant vendor as Firmware Vendor
+    participant log as Log Operator
+    participant update as Update Client
+    participant flash as Device Flash
+    participant bootloader as Device bootloader
+
+    activate log
+
+    rect rgba(80,80,80,0.1)
+        note right of vendor: Create and log new firmware
+        activate vendor
+        vendor ->>+ vendor: Build new image
+        vendor ->>+ log: QueueFirmwareRequest
+        log -->>- vendor: QueueFirmareResponse
+        par Integrate
+        log --X log: Log integrates
+        and Vendor awaits integration
+            loop Await Inclusion
+                vendor ->>+ log: GetLatestLogRootRequest
+                log -->>- vendor: GetLatestLogRootResponse
+                opt Log has grown
+                    vendor ->>+ log: GetInclusionProofReqeust
+                    log -->>- vendor: GetInclusionProofResponse
+                end
+            end
+        end
+        vendor ->> vendor: Create update file
+        deactivate vendor
+    end
+
+    opt Notify clients
+        activate vendor
+        vendor --X update: New update available
+    deactivate vendor
+    end
+
+    deactivate log
