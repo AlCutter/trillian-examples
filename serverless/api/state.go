@@ -15,6 +15,12 @@
 // Package api contains the "public" API/artifacts of the serverless log.
 package api
 
+import (
+	"bytes"
+	"fmt"
+	"io"
+)
+
 // LogState represents the state of a serverless log
 type LogState struct {
 	// Size is the number of leaves in the log
@@ -35,6 +41,56 @@ type Tile struct {
 	// straight-forward.
 	// Note that only non-ephemeral nodes are stored.
 	Nodes [][]byte
+}
+
+// MarshalBinary implements encoding/BinaryMarshaller and writes out a Tile
+// instance in the following format:
+//
+// <unsigned byte - hash size in bytes>
+// <unsigned byte - number of leaves in tile>
+// <node data - hashsize * numleaves * 2 bytes>
+func (t Tile) MarshalBinary() ([]byte, error) {
+	b := bytes.NewBuffer(make([]byte, 0, len(t.Nodes)*32+2))
+	b.WriteByte(32) // SHA256
+	b.WriteByte(byte(t.NumLeaves))
+	for _, n := range t.Nodes {
+		b.Write(n)
+	}
+	return b.Bytes(), nil
+}
+
+// UnmarshalBinary implements encoding/BinaryUnmarshaler and reads tiles
+// which were written by the MarshalBinary method above.
+func (t *Tile) UnmarshalBinary(raw []byte) error {
+	b := bytes.NewBuffer(raw)
+	hs, err := b.ReadByte()
+	if err != nil {
+		return fmt.Errorf("unable to read hashsize: %w", err)
+	}
+	if hs != 32 {
+		return fmt.Errorf("invalid hash size %d", hs)
+	}
+	numLeaves, err := b.ReadByte()
+	if err != nil {
+		return fmt.Errorf("unable to read numLeaves: %w", err)
+	}
+	nodes := make([][]byte, 0, numLeaves*2)
+	for {
+		h := make([]byte, hs)
+		n, err := b.Read(h)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("unable to read node: %w", err)
+		}
+		if n != int(hs) {
+			return fmt.Errorf("short read (%d bytes)", n)
+		}
+		nodes = append(nodes, h)
+	}
+	t.NumLeaves, t.Nodes = uint(numLeaves), nodes
+	return nil
 }
 
 // TileNodeKey generates keys used in Tile.Nodes array.
