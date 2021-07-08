@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -48,7 +49,7 @@ type LogInfo struct {
 // The options for a server (specified in main.go).
 type ServerOpts struct {
 	// Where to listen for requests.
-	ListenAddr string
+	Listener net.Listener
 	// The file for sqlite3 storage.
 	DBFile string
 	// The signer for the witness.
@@ -110,12 +111,11 @@ func Main(ctx context.Context, opts ServerOpts) error {
 	r := mux.NewRouter()
 	srv.RegisterHandlers(r)
 	hServer := &http.Server{
-		Addr:    opts.ListenAddr,
 		Handler: r,
 	}
 	e := make(chan error, 1)
 	go func() {
-		e <- hServer.ListenAndServe()
+		e <- hServer.Serve(opts.Listener)
 		close(e)
 	}()
 	<-ctx.Done()

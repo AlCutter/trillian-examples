@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
+	"net"
 
 	"github.com/golang/glog"
 	"github.com/google/trillian-examples/witness/golang/cmd/witness/impl"
@@ -59,11 +60,15 @@ func main() {
 	}
 
 	ctx := context.Background()
+	l, err := net.Listen("tcp", *listenAddr)
+	if err != nil {
+		glog.Exitf("Failed to listen on %q: %v", *listenAddr, err)
+	}
 	if err := impl.Main(ctx, impl.ServerOpts{
-		ListenAddr: *listenAddr,
-		DBFile:     *dbFile,
-		Signer:     signer,
-		Config:     js,
+		Listener: l,
+		DBFile:   *dbFile,
+		Signer:   signer,
+		Config:   js,
 	}); err != nil {
 		glog.Exitf("Error running witness: %v", err)
 	}
